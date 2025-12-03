@@ -8,10 +8,17 @@ import CameraCanvas from "../components/Workout/CameraCanvas";
 import { EXERCISES } from "../utils/workout/chooseWorkout";
 import Counter from "../components/Counter";
 import TimerCounter from "../components/TimeCounter";
+import html2canvas from "html2canvas";
+import ShareActivityModal from "../components/Statistics/ShareActivityModal";
 
 export default function WorkoutSession() {
   const { token } = theme.useToken();
   const { exerciseId } = useParams();
+  const [status, setStatus] = useState("idle"); // "idle" | "countdown" | "running"
+  const [countdown, setCountdown] = useState(3);
+  const countdownRef = useRef(3);
+  const [summaryImage, setSummaryImage] = useState(null);
+  const [isShareActivityOpen, setIsShareActivityOpen] = useState(false);
 
   const { videoRef, canvasRef, debug, toggleDebug, keypoints } =
     useTensorPose();
@@ -22,10 +29,6 @@ export default function WorkoutSession() {
     exercise.strategy,
     keypoints
   );
-
-  const [status, setStatus] = useState("idle"); // "idle" | "countdown" | "running"
-  const [countdown, setCountdown] = useState(3);
-  const countdownRef = useRef(3);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -58,15 +61,25 @@ export default function WorkoutSession() {
     return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
   };
 
-  const handleFinish = () => {
+  const captureSummaryImage = async () => {
+    const element = document.getElementById("summary-capture");
+    const canvas = await html2canvas(element);
+    return canvas.toDataURL("image/png");
+  };
+
+  const handleFinish = async () => {
     setStatus("idle");
 
-    alert(
-      `Podsumowanie treningu:\n
-        Ćwiczenie: ${exercise.label || "nieznane"}
-        Czas: ${formatTime(elapsedSeconds)}
-        Powtórzenia: ${count}`
-    );
+    // alert(
+    //   `Podsumowanie treningu:\n
+    //     Ćwiczenie: ${exercise.label || "nieznane"}
+    //     Czas: ${formatTime(elapsedSeconds)}
+    //     Powtórzenia: ${count}`
+    // );
+
+    const imageUrl = await captureSummaryImage();
+    setSummaryImage(imageUrl);
+    setIsShareActivityOpen(true);
   };
 
   useEffect(() => {
@@ -219,6 +232,25 @@ export default function WorkoutSession() {
         <div style={{ fontSize: 14, opacity: 0.7 }}>Powtórzenia</div>
         <div style={{ fontSize: 36, fontWeight: 700 }}>{count}</div>
       </Card>
+
+      <div id="summary-capture" style={{ width: 300 }}>
+        <div>Liczba serii:</div>
+        <Counter value={count} />
+        <div>Czas:</div>
+        <TimerCounter seconds={elapsedSeconds} />
+      </div>
+
+      <ShareActivityModal 
+        open={isShareActivityOpen}
+        title={`Podsumowanie treningu: ${exercise.label}`}
+        onClose={() => setIsShareActivityOpen(false)}
+          image={summaryImage}
+          onSubmit={(payload) => {
+            console.log("Dane do wysyłki:", payload);
+
+            setIsShareActivityOpen(false);
+        }}
+      />
     </div>
   );
 }

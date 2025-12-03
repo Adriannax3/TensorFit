@@ -3,14 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 export default function LoginForm({ onSubmit }) {
   const [form] = Form.useForm();
-  const navigate = useNavigate();
 
   const handleFinish = (values) => {
     if (onSubmit) {
       onSubmit(values);
     }
-    console.log("Login data:", values);
-    navigate("/menu");
   };
 
   return (

@@ -3,7 +3,7 @@ import { Card, Button } from "antd";
 import "../styles/menu.scss";
 import MenuWorkout from "./Menu_Workout";
 import MenuStats from "./Menu_Statistics";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Menu() {
   const location = useLocation();
@@ -14,6 +14,7 @@ export default function Menu() {
       ? "workouts"
       : null
   );
+  const navigate = useNavigate();
 
   if (option == "workouts") {
     return (
@@ -96,6 +97,16 @@ export default function Menu() {
             hoverable
           >
             Statystyki
+          </Card>
+        </div>
+        <div className="menu-link">
+          <Card
+            variant="outlined"
+            className="menu-card"
+            onClick={() => navigate("/entries")}
+            hoverable
+          >
+            Wpisy
           </Card>
         </div>
       </div>

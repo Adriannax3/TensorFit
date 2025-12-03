@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col, Button, Grid, Typography, theme } from "antd";
 import { useNavigate } from "react-router-dom";
-import { LeftOutlined } from "@ant-design/icons";
 import ExerciseSummaryChart from "../components/Statistics/ExerciseSummaryChart";
 import ExerciseHighlights from "../components/Statistics/ExerciseHighlights";
+import ShareActivityModal from "../components/Statistics/ShareActivityModal";
 
 const { useBreakpoint } = Grid;
 const { Title } = Typography;
 
 export default function StatisticsScreen() {
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [chartImage, setChartImage] = useState(null);
+
   const navigate = useNavigate();
   const screens = useBreakpoint();
   const { token } = theme.useToken();
@@ -73,7 +76,13 @@ export default function StatisticsScreen() {
                 flexDirection: "column",
               }}
             >
-              <ExerciseSummaryChart style={{ flex: 1 }} />
+              <ExerciseSummaryChart
+               style={{ flex: 1 }}
+                onShare={(img) => {
+                  setChartImage(img);
+                  setShareModalOpen(true);
+                }}
+               />
             </div>
           </Col>
 
@@ -92,6 +101,16 @@ export default function StatisticsScreen() {
           </Col>
         </Row>
       </div>
+        <ShareActivityModal
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          image={chartImage}
+          onSubmit={(payload) => {
+            console.log("Dane do wysyłki:", payload);
+
+            setShareModalOpen(false);
+          }}
+        />
     </div>
   );
 }

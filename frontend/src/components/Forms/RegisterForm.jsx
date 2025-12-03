@@ -7,7 +7,6 @@ export default function RegisterForm({ onSubmit }) {
     if (onSubmit) {
       onSubmit(values);
     }
-    console.log("Register data:", values);
   };
 
   return (

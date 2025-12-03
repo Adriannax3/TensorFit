@@ -3,13 +3,18 @@ import Menu from "./components/Menu";
 import Home from "./pages/Home";
 import { Button } from "antd";
 import { SunOutlined, MoonOutlined } from "@ant-design/icons";
+import { useAuth } from "./context/useAuth";
+import ProtectedRoute from "./ProtectedRoute";
 
-// pages
 import WorkoutSession from "./pages/WorkoutSession";
 import RankingScreen from "./pages/RankingScreen";
 import StatisticsScreen from "./pages/StatisticsScreen";
+import EntriesScreen from "./pages/Entries";
+import MainLayout from "./layout/MainLayout";
 
 function App({ toggleTheme, isDark }) {
+  const { user } = useAuth();
+
   return (
     <>
       <Button
@@ -26,11 +31,49 @@ function App({ toggleTheme, isDark }) {
         }}
       />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/session/:exerciseId" element={<WorkoutSession />} />
-        <Route path="/stats" element={<StatisticsScreen />} />
-        <Route path="/ranking" element={<RankingScreen />} />
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/menu"
+            element={
+              <ProtectedRoute>
+                <Menu />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/session/:exerciseId"
+            element={
+              <ProtectedRoute>
+                <WorkoutSession />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <StatisticsScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ranking"
+            element={
+              <ProtectedRoute>
+                <RankingScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/entries"
+            element={
+              <ProtectedRoute>
+                <EntriesScreen />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
       </Routes>
     </>
   );

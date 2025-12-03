@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider, theme } from "antd";
 import "./index.css";
 import App from "./App.jsx";
+import { AuthProvider } from "./context/useAuth.jsx";
 
 export function Root() {
   const [isDark, setIsDark] = useState(() => {
@@ -30,9 +31,11 @@ export function Root() {
         },
       }}
     >
-      <BrowserRouter>
-        <App toggleTheme={() => setIsDark(!isDark)} isDark={isDark} />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <App toggleTheme={() => setIsDark(!isDark)} isDark={isDark} />
+        </BrowserRouter>
+      </AuthProvider>
     </ConfigProvider>
   );
 }

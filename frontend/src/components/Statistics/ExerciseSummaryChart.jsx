@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { Card, Select, Divider, theme as antdTheme } from "antd";
+import { Card, Select, Divider, theme as antdTheme, Button } from "antd";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
+import { IoShareSocialOutline } from "react-icons/io5";
 
 const daysAgo = (n) => dayjs().subtract(n, "day").format("YYYY-MM-DD");
 const enumerateDates = (startStr, endStr) => {
@@ -38,8 +39,9 @@ const colorMap = {
   Wykroki:   "#F6BD16",
 };
 
-export default function ExerciseSummaryChart() {
+export default function ExerciseSummaryChart({ onShare }) {
   const { token } = antdTheme.useToken();
+  const chartRef = React.useRef(null);
 
   const minDateStr = useMemo(
     () => dataset.reduce((min, r) => (r.data < min ? r.data : min), dataset[0].data),
@@ -98,6 +100,17 @@ export default function ExerciseSummaryChart() {
       };
     });
   }, [selectedTypes, days, startStr, endStr]);
+
+  const handleShare = () => {
+    const echartsInstance = chartRef.current.getEchartsInstance();
+    const img = echartsInstance.getDataURL({
+      type: "png",
+      pixelRatio: 2,
+      backgroundColor: "#fff"
+    });
+
+    onShare?.(img);
+  };
 
   const colors = useMemo(
     () => series.map(s => colorMap[s.name] ?? token.colorPrimary),
@@ -162,6 +175,11 @@ export default function ExerciseSummaryChart() {
             }}
           >
             <span style={{ fontWeight: 600, fontSize: 16 }}>Podsumowanie ćwiczeń</span>
+            <Button 
+              onClick={handleShare}
+              icon={<IoShareSocialOutline />}>
+              Udostępnij
+            </Button>
             <Select
               value={datePreset}
               onChange={setDatePreset}
@@ -197,6 +215,7 @@ export default function ExerciseSummaryChart() {
       styles={{ body: { paddingTop: 16 } }}
     >
       <ReactECharts
+        ref={chartRef}
         option={option}
         style={{ height: 320, width: "100%" }}
         opts={{ renderer: "svg" }}
