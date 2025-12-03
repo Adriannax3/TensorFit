@@ -1,19 +1,13 @@
+import { useEffect, useState } from "react";
 import { Card, Row, Col, Statistic } from "antd";
 import { GiRunningNinja, GiStopwatch, GiPodiumWinner, GiStrongMan } from "react-icons/gi";
-
-const mockData = {
-  longestStreakDays: 14,
-  longestWorkout: { type: "squat", duration: 1800 },
-  mostFrequent: "pushup",
-  biggestReps: { type: "squat", count: 120 },
-};
+import { getMyWorkoutsStats } from "../../services/api";
 
 const labelMap = {
   squat: "Przysiady",
-  pushup: "Pompki",
-  plank: "Deska",
-  jumpingJack: "Pajacyki",
-  burpee: "Burpees",
+  "jumping-jacks": "Pajace",
+  "side-lunges": "Wykroki w bok",
+  "side-bends": "Skłony w bok",
 };
 
 function formatDuration(totalSeconds) {
@@ -29,6 +23,24 @@ function formatDuration(totalSeconds) {
 }
 
 export default function ExerciseHighlights() {
+  const [dataset, setDataset] = useState([]);
+
+  useEffect(() => {
+    async function fetchDataset() {
+      try { 
+        const res = await getMyWorkoutsStats();
+        setDataset(res);
+        console.log(res);
+      } catch (error) {
+        console.error("Error fetching workout stats:", error);
+      }
+
+    }
+    fetchDataset();
+  }, []);
+
+  if(!dataset || dataset.length===0) return <>Ładowanie...</>;
+
   return (
     <Card
       title="Twoje statystyki"
@@ -41,7 +53,7 @@ export default function ExerciseHighlights() {
             <GiRunningNinja size={40} color="#5B8FF9" />
             <Statistic
               title="Najdłuższa seria"
-              value={`${mockData.longestStreakDays} dni`}
+              value={`${dataset.longestStreakDays} ${dataset.longestStreakDays === 1 ? 'dzień' : 'dni'}`}
             />
           </Card>
         </Col>
@@ -51,8 +63,8 @@ export default function ExerciseHighlights() {
             <GiStopwatch size={40} color="#5AD8A6" />
             <Statistic
               title="Najdłuższy trening"
-              value={formatDuration(mockData.longestWorkout.duration)}
-              suffix={` (${labelMap[mockData.longestWorkout.type]})`}
+              value={formatDuration(dataset.longestWorkout.duration)}
+              suffix={` (${labelMap[dataset.longestWorkout.type]})`}
             />
           </Card>
         </Col>
@@ -62,7 +74,7 @@ export default function ExerciseHighlights() {
             <GiPodiumWinner size={40} color="#F6BD16" />
             <Statistic
               title="Najczęściej wykonujesz"
-              value={labelMap[mockData.mostFrequent]}
+              value={labelMap[dataset.mostFrequent]}
             />
           </Card>
         </Col>
@@ -72,8 +84,8 @@ export default function ExerciseHighlights() {
             <GiStrongMan size={40} color="#E8684A" />
             <Statistic
               title="Największa seria powtórzeń"
-              value={`${mockData.biggestReps.count}x`}
-              suffix={` ${labelMap[mockData.biggestReps.type]}`}
+              value={`${dataset.biggestReps.count}x`}
+              suffix={` ${labelMap[dataset.biggestReps.type]}`}
             />
           </Card>
         </Col>

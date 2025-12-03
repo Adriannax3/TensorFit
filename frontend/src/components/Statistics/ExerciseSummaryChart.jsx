@@ -1,94 +1,109 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, Select, Divider, theme as antdTheme, Button } from "antd";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import { IoShareSocialOutline } from "react-icons/io5";
+import { getMyWorkouts } from "../../services/api";
 
-const daysAgo = (n) => dayjs().subtract(n, "day").format("YYYY-MM-DD");
 const enumerateDates = (startStr, endStr) => {
   const out = [];
   let d = dayjs(startStr), end = dayjs(endStr);
-  while (d.isSame(end) || d.isBefore(end)) { out.push(d.format("YYYY-MM-DD")); d = d.add(1, "day"); }
+  while (d.isSame(end) || d.isBefore(end)) { 
+    out.push(d.format("YYYY-MM-DD")); 
+    d = d.add(1, "day"); 
+  }
   return out;
 };
 
-const dataset = [
-  { data: daysAgo(7), exerciseType: "jumpingJacks", counter: 6, time: 540 },
-  { data: daysAgo(7), exerciseType: "sideLunges",   counter: 2, time: 90 },
-  { data: daysAgo(6), exerciseType: "sideLunges",   counter: 4, time: 260 },
-  { data: daysAgo(6), exerciseType: "jumpingJacks", counter: 5, time: 480 },
-  { data: daysAgo(5), exerciseType: "squat",        counter: 3, time: 75 },
-  { data: daysAgo(4), exerciseType: "jumpingJacks", counter: 7, time: 720 },
-  { data: daysAgo(3), exerciseType: "sideLunges",   counter: 5, time: 300 },
-  { data: daysAgo(3), exerciseType: "squat",        counter: 1, time: 30 },
-  { data: daysAgo(2), exerciseType: "squat",        counter: 8, time: 1500 },
-  { data: daysAgo(2), exerciseType: "sideLunges",   counter: 3, time: 180 },
-  { data: daysAgo(1), exerciseType: "squat",        counter: 2, time: 600 },
-  { data: daysAgo(1), exerciseType: "jumpingJacks", counter: 4, time: 420 },
-];
-
 const labelMap = {
   squat: "Przysiady",
-  jumpingJacks: "Pajace",
-  sideLunges: "Wykroki",
+  "jumping-jacks": "Pajace",
+  "side-lunges": "Wykroki w bok",
+  "side-bends": "Skłony w bok",
 };
-const allTypes = Array.from(new Set(dataset.map(d => d.exerciseType)));
+
 const colorMap = {
-  Przysiady: "#5B8FF9",
-  Pajace:    "#5AD8A6",
-  Wykroki:   "#F6BD16",
+  squat: "#5B8FF9",
+  "jumping-jacks": "#5AD8A6",
+  "side-lunges": "#F6BD16",
+  "side-bends": "#E86452",
+};
+
+const calculateDaysBack = (preset) => {
+  switch (preset) {
+    case "7": return 7;
+    case "30": return 30;
+    case "90": return 90;
+    case "180": return 180;
+    case "365": return 365;
+    case null:
+    case "all":
+      return null;
+    default:
+      return 30;
+  }
 };
 
 export default function ExerciseSummaryChart({ onShare }) {
   const { token } = antdTheme.useToken();
   const chartRef = React.useRef(null);
 
+  const [dataset, setDataset] = useState([]);
+  const [datePreset, setDatePreset] = useState("7");
+  const [selectedTypes, setSelectedTypes] = useState([]);
+
+  const allTypes = useMemo(
+    () => Array.from(new Set(dataset.map(d => d.exerciseType))),
+    [dataset]
+  );
+
+  useEffect(() => {
+    setSelectedTypes(allTypes);
+  }, [allTypes]);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        const days = calculateDaysBack(datePreset);
+        const data = await getMyWorkouts(days);
+
+        const mapped = data.map(w => ({
+          data: dayjs(w.date).format("YYYY-MM-DD"),
+          exerciseType: w.exerciseType,
+          counter: w.counter,
+          time: w.time
+        }));
+
+        setDataset(mapped);
+      } catch (err) {
+        console.error("Error fetching workouts:", err);
+      }
+    };
+
+    fetchWorkouts();
+  }, [datePreset]);
+
   const minDateStr = useMemo(
-    () => dataset.reduce((min, r) => (r.data < min ? r.data : min), dataset[0].data),
-    []
+    () => (dataset.length ? dataset.map(r => r.data).sort()[0] : dayjs().format("YYYY-MM-DD")),
+    [dataset]
   );
+
   const maxDateStr = useMemo(
-    () => dataset.reduce((max, r) => (r.data > max ? r.data : max), dataset[0].data),
-    []
+    () => (dataset.length ? dataset.map(r => r.data).sort().slice(-1)[0] : dayjs().format("YYYY-MM-DD")),
+    [dataset]
   );
 
-  const presets = [
-    { value: "7d",  label: "Ostatnie 7 dni" },
-    { value: "30d", label: "Ostatnie 30 dni" },
-    { value: "3m",  label: "Ostatnie 3 msc" },
-    { value: "6m",  label: "Ostatnie 6 msc" },
-    { value: "1y",  label: "Ostatni rok" },
-    { value: "all", label: "Wszystko" },
-  ];
+  const days = useMemo(() => enumerateDates(minDateStr, maxDateStr), [minDateStr, maxDateStr]);
 
-  const [datePreset, setDatePreset] = useState("7d");
-  const [selectedTypes, setSelectedTypes] = useState(allTypes);
-
-  const { startStr, endStr } = useMemo(() => {
-    const end = dayjs(maxDateStr);
-    let start;
-    switch (datePreset) {
-      case "7d":  start = end.subtract(6, "day"); break;
-      case "30d": start = end.subtract(29, "day"); break;
-      case "3m":  start = end.subtract(3, "month").add(1, "day"); break;
-      case "6m":  start = end.subtract(6, "month").add(1, "day"); break;
-      case "1y":  start = end.subtract(1, "year").add(1, "day"); break;
-      case "all":
-      default:    start = dayjs(minDateStr); break;
-    }
-    if (start.isBefore(dayjs(minDateStr))) start = dayjs(minDateStr);
-    return { startStr: start.format("YYYY-MM-DD"), endStr: end.format("YYYY-MM-DD") };
-  }, [datePreset, minDateStr, maxDateStr]);
-
-  const days = useMemo(() => enumerateDates(startStr, endStr), [startStr, endStr]);
   const series = useMemo(() => {
     const idx = new Map();
     for (const r of dataset) {
-      if (r.data >= startStr && r.data <= endStr) idx.set(`${r.data}|${r.exerciseType}`, r);
+      idx.set(`${r.data}|${r.exerciseType}`, r);
     }
+
     return selectedTypes.map((type) => {
       const name = labelMap[type] || type;
-      const data = days.map((d) => (idx.get(`${d}|${type}`)?.counter ?? 0));
+      const data = days.map((d) => idx.get(`${d}|${type}`)?.counter ?? 0);
       return {
         name,
         type: "line",
@@ -99,7 +114,7 @@ export default function ExerciseSummaryChart({ onShare }) {
         lineStyle: { width: 3 },
       };
     });
-  }, [selectedTypes, days, startStr, endStr]);
+  }, [selectedTypes, days, dataset]);
 
   const handleShare = () => {
     const echartsInstance = chartRef.current.getEchartsInstance();
@@ -113,7 +128,11 @@ export default function ExerciseSummaryChart({ onShare }) {
   };
 
   const colors = useMemo(
-    () => series.map(s => colorMap[s.name] ?? token.colorPrimary),
+    () =>
+      series.map(s => {
+        const backendKey = Object.keys(labelMap).find(key => labelMap[key] === s.name);
+        return colorMap[backendKey] ?? token.colorPrimary;
+      }),
     [series, token.colorPrimary]
   );
 
@@ -125,101 +144,51 @@ export default function ExerciseSummaryChart({ onShare }) {
       backgroundColor: token.colorBgElevated,
       borderColor: token.colorBorder,
       textStyle: { color: token.colorText },
-      formatter: (params) => {
-        const day = days[params?.[0]?.dataIndex ?? 0] || "";
-        const lines = params.map(p => {
-          const label = p.seriesName;
-          const value = p.value;
-          return `<div style="display:flex;gap:8px;align-items:center;">
-                    <span style="display:inline-block;width:10px;height:10px;background:${p.color};border-radius:50%;"></span>
-                    <span>${label}: <b>${value}</b> powt.</span>
-                  </div>`;
-        });
-        return `<div><div style="margin-bottom:6px;"><b>${day}</b></div>${lines.join("")}</div>`;
-      },
     },
-    legend: {
-      bottom: 0,
-      textStyle: { color: token.colorText },
-    },
+    legend: { bottom: 0, textStyle: { color: token.colorText }},
     grid: { left: 8, right: 12, top: 24, bottom: 40, containLabel: true },
-    xAxis: {
-      type: "category",
-      data: days,
-      axisLine: { lineStyle: { color: token.colorBorderSecondary } },
-      axisTick: { lineStyle: { color: token.colorBorderSecondary } },
-      axisLabel: { color: token.colorTextSecondary },
-      splitLine: { show: false },
-    },
-    yAxis: {
-      type: "value",
-      axisLine: { lineStyle: { color: token.colorBorderSecondary } },
-      axisTick: { lineStyle: { color: token.colorBorderSecondary } },
-      axisLabel: { color: token.colorTextSecondary },
-      splitLine: { lineStyle: { color: token.colorSplit } },
-    },
+    xAxis: { type: "category", data: days },
+    yAxis: { type: "value" },
     series,
   }), [colors, days, series, token]);
+
+  const presets = [
+    { value: "7", label: "Ostatnie 7 dni" },
+    { value: "30", label: "Ostatnie 30 dni" },
+    { value: "90", label: "Ostatnie 3 msc" },
+    { value: "180", label: "Ostatnie 6 msc" },
+    { value: "365", label: "Ostatni rok" },
+    { value: null, label: "Wszystko" },
+  ];
+
+  if (!dataset) return <div>Ładowanie...</div>;
 
   return (
     <Card
       title={
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 8,
-              minHeight: "100%"
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontWeight: 600, fontSize: 16 }}>Podsumowanie ćwiczeń</span>
-            <Button 
-              onClick={handleShare}
-              icon={<IoShareSocialOutline />}>
-              Udostępnij
-            </Button>
-            <Select
-              value={datePreset}
-              onChange={setDatePreset}
-              options={presets}
-              style={{ minWidth: 200 }}
-            />
+            <Button onClick={handleShare} icon={<IoShareSocialOutline />}>Udostępnij</Button>
+            <Select value={datePreset} onChange={setDatePreset} options={presets} style={{ minWidth: 200 }} />
           </div>
-    
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
             <span style={{ fontWeight: 600, fontSize: 16 }}>Rodzaj ćwiczeń</span>
             <Select
               mode="multiple"
               style={{ minWidth: 220, width: "100%" }}
               value={selectedTypes}
               onChange={setSelectedTypes}
-              options={allTypes.map((t) => ({
-                label: labelMap[t] || t,
-                value: t,
-              }))}
+              options={allTypes.map((t) => ({ label: labelMap[t] || t, value: t }))}
               placeholder="Wybierz ćwiczenia"
               maxTagCount="responsive"
             />
           </div>
         </div>
       }
-      styles={{ body: { paddingTop: 16 } }}
     >
-      <ReactECharts
-        ref={chartRef}
-        option={option}
-        style={{ height: 320, width: "100%" }}
-        opts={{ renderer: "svg" }}
-      />
+      <ReactECharts ref={chartRef} option={option} style={{ height: 320, width: "100%" }} opts={{ renderer: "svg" }} />
       <Divider style={{ margin: "8px 0 0" }} />
     </Card>
   );

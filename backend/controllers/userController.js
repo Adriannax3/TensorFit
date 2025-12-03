@@ -1,11 +1,10 @@
-const User = require('../models/User');
+const { User } = require('../models');
 const { hashPassword, comparePassword } = require('../utils/helpers');
 const { protect } = require('../middleware/authMiddleware');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 const JWT_EXPIRES_IN = '1d';
-
 
 exports.createUser = async (req, res) => {
     try {

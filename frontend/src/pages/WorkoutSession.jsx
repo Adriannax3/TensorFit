@@ -11,6 +11,8 @@ import TimerCounter from "../components/TimeCounter";
 import html2canvas from "html2canvas";
 import ShareActivityModal from "../components/Statistics/ShareActivityModal";
 
+import { createWorkout } from "../services/api";
+
 export default function WorkoutSession() {
   const { token } = theme.useToken();
   const { exerciseId } = useParams();
@@ -70,17 +72,24 @@ export default function WorkoutSession() {
   const handleFinish = async () => {
     setStatus("idle");
 
-    // alert(
-    //   `Podsumowanie treningu:\n
-    //     Ćwiczenie: ${exercise.label || "nieznane"}
-    //     Czas: ${formatTime(elapsedSeconds)}
-    //     Powtórzenia: ${count}`
-    // );
+    try {
+      await createWorkout({
+        date: new Date().toISOString(),
+        exerciseType: exerciseId,
+        counter: count,
+        time: elapsedSeconds
+      });
 
-    const imageUrl = await captureSummaryImage();
-    setSummaryImage(imageUrl);
-    setIsShareActivityOpen(true);
+      const imageUrl = await captureSummaryImage();
+      setSummaryImage(imageUrl);
+      setIsShareActivityOpen(true);
+      handleResetAll();
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
   };
+
 
   useEffect(() => {
     if (status !== "countdown") return;

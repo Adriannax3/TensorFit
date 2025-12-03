@@ -1,13 +1,11 @@
 const express = require('express');
 const userRoutes = require('./userRoutes');
-// import { protect } from '../middleware/authMiddleware.js';
+const workoutRoutes = require('./workoutRoutes');
 
 const router = express.Router();
 
 router.use('/users', userRoutes);
+router.use('/workouts', workoutRoutes);
 
-// router.get('/me', protect, (req, res) => {
-//   res.json({ message: 'Masz dostęp', user: req.user });
-// });
 
 module.exports = router;
