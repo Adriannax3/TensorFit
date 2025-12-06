@@ -1,6 +1,5 @@
 const { User } = require('../models');
 const { hashPassword, comparePassword } = require('../utils/helpers');
-const { protect } = require('../middleware/authMiddleware');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';

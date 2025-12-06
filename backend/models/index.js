@@ -8,17 +8,23 @@ const Workout = require('./Workout');
 User.hasMany(Workout);
 Workout.belongsTo(User, { foreignKey: 'userId' });
 
+User.hasMany(Entry, { foreignKey: 'userId' });
+Entry.belongsTo(User, { foreignKey: 'userId' });
 
-User.hasMany(Entry);
-Entry.belongsTo(User);
+User.hasMany(Entry, { foreignKey: 'userId' });
+Entry.belongsTo(User, { foreignKey: 'userId' });
 
-User.hasMany(Comment);
-Comment.belongsTo(User);
+User.hasMany(Comment, { foreignKey: 'userId' });
+Comment.belongsTo(User, { foreignKey: 'userId' });
 
-Entry.hasMany(Comment);
-Comment.belongsTo(Entry);
+User.belongsToMany(Entry, { 
+  through: Like, 
+  foreignKey: 'userId',
+  otherKey: 'entryId'
+});
 
-User.belongsToMany(Entry, { through: Like, foreignKey: "userId" });
-Entry.belongsToMany(User, { through: Like, foreignKey: "entryId" });
+
+Entry.hasMany(Comment, { foreignKey: 'entryId' });
+Comment.belongsTo(Entry, { foreignKey: 'entryId' });
 
 module.exports = { User, Entry, Comment, Like, Workout };
