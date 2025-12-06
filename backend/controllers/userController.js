@@ -13,8 +13,9 @@ exports.createUser = async (req, res) => {
         const hashedPassword = hashPassword(password);
 
         const user = await User.create({ email, username, password: hashedPassword });
+        const token = jwt.sign({ id: user.id, email: user.email, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
         const { password: _, ...userData } = user.toJSON();
-        res.status(201).json(userData);
+        res.json({ user: userData, token });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -30,7 +31,6 @@ exports.loginUser = async (req, res) => {
 
         const isMatch = comparePassword(password, user.password);
         if (!isMatch) return res.status(401).json({ error: 'Nieprawidłowe dane' });
-
         const token = jwt.sign({ id: user.id, email: user.email, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         const { password: _, ...userData } = user.toJSON();

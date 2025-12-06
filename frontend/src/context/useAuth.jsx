@@ -13,8 +13,10 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await axios.post("/users", { email, username, password });
-      setUser(response.data);
-      return response.data;
+      const { user, token } = response.data;
+      localStorage.setItem("token", token);
+      setUser(user);
+      return user;
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Błąd rejestracji");
