@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Layout, Button, Card, Avatar, Space, Image } from "antd";
 import { useNavigate } from "react-router-dom";
 import { LikeOutlined, ShareAltOutlined, MessageOutlined } from "@ant-design/icons";

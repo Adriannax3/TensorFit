@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Row, Col, Statistic } from "antd";
+import { Card, Row, Col, Statistic, Spin } from "antd";
 import { GiRunningNinja, GiStopwatch, GiPodiumWinner, GiStrongMan } from "react-icons/gi";
 import { getMyWorkoutsStats } from "../../services/api";
 
@@ -24,22 +24,46 @@ function formatDuration(totalSeconds) {
 
 export default function ExerciseHighlights() {
   const [dataset, setDataset] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchDataset() {
+      setLoading(true);
       try { 
         const res = await getMyWorkoutsStats();
         setDataset(res);
         console.log(res);
       } catch (error) {
         console.error("Error fetching workout stats:", error);
+      } finally {
+        setLoading(false);
       }
-
     }
     fetchDataset();
   }, []);
+  
+  if (loading) return (
+    <div style={{display: "flex", alignItems: "center", justifyContent: "center"}}>
+      <Spin size="large" />
+    </div>
+  );
 
-  if(!dataset || dataset.length===0) return <>Ładowanie...</>;
+  if(!dataset.longestStreakDays 
+    || !dataset.biggestReps
+    || !dataset.longestWorkout
+    || !dataset.mostFrequent
+  ) return (
+    <Card style={{ 
+      display: "flex", 
+      justifyContent: "center",
+      alignItems: "center",
+      textAlign: "center",
+      height: "100%" 
+    }}>
+      Brak danych. <br />
+      Wykonaj ćwiczenia by zobaczyć statystyki.
+    </Card>
+  );
 
   return (
     <Card

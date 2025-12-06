@@ -1,29 +1,9 @@
-import React from "react";
-import { Card, Table, Typography, Tag, theme } from "antd";
+import { useEffect, useState } from "react";
+import { Card, Table, Typography, Tag, theme, Segmented } from "antd";
 import { CrownFilled, FireOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import axios from "../axios";
 
 const { Text } = Typography;
-
-const mockRanking = [
-  { key: 1,  name: "Anka123",           points: 1560, streak: 14, bestExercise: "Przysiady" },
-  { key: 2,  name: "RybkaAndrzej1980",  points: 1420, streak: 11, bestExercise: "Pajacyki" },
-  { key: 3,  name: "KasiaFit",          points: 1280, streak: 9,  bestExercise: "Pajacyki" },
-  { key: 4,  name: "TomekWlkp",         points: 1210, streak: 8,  bestExercise: "Wykroki" },
-  { key: 5,  name: "Marek_PL",          points: 990,  streak: 6,  bestExercise: "Przysiady" },
-  { key: 6,  name: "BasiaRuns",         points: 940,  streak: 5,  bestExercise: "Przysiady" },
-  { key: 7,  name: "Ola_98",            points: 910,  streak: 5,  bestExercise: "Pajacyki" },
-  { key: 8,  name: "ZbyszekPower",      points: 850,  streak: 4,  bestExercise: "Pajacyki" },
-  { key: 9,  name: "JuliaKowal",        points: 780,  streak: 3,  bestExercise: "Przysiady" },
-  { key: 10, name: "Pawełek",           points: 720,  streak: 2,  bestExercise: "Przysiady" },
-];
-
-const yourPosition = {
-  key: 198,
-  name: "Ty 😎",
-  points: 240,
-  streak: 1,
-  bestExercise: "Pompki",
-};
 
 const columns = [
   {
@@ -70,7 +50,7 @@ const columns = [
     dataIndex: "bestExercise",
     render: (t) => (
       <Tag icon={<ThunderboltOutlined />} color="blue">
-        {t}
+        {t || "—"}
       </Tag>
     ),
     align: "center",
@@ -81,9 +61,68 @@ const columns = [
 export default function Ranking() {
   const { token } = theme.useToken();
 
+  const [range, setRange] = useState("30"); // "30" | "all"
+  const [ranking, setRanking] = useState([]);
+  const [me, setMe] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axios.get("/workouts/ranking", {
+          params: {
+            last: range === "30" ? "30" : "all",
+          },
+        });
+
+        const { top = [], me: meData } = res.data || {};
+
+        const mappedTop = top.map((item) => ({
+          key: item.rank,
+          name: item.username || `Użytkownik ${item.user_id}`,
+          points: item.total_points || 0,
+          streak: item.streak ?? 0,
+          bestExercise: mapExerciseName(item.best_exercise),
+        }));
+        
+        setRanking(mappedTop);
+        
+        if (meData) {
+          setMe({
+            key: meData.rank,
+            name: meData.username || "Twoja pozycja",
+            points: meData.total_points || 0,
+            streak: meData.streak ?? 0,
+            bestExercise: mapExerciseName(meData.best_exercise),
+          });
+        } else {
+          setMe(null);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRanking();
+  }, [range]);
+
   return (
     <Card
-      title="🏆 Ranking użytkowników"
+      title="Ranking użytkowników"
+      extra={
+        <Segmented
+          options={[
+            { label: "Ostatnie 30 dni", value: "30" },
+            { label: "Zawsze", value: "all" },
+          ]}
+          value={range}
+          onChange={setRange}
+        />
+      }
       styles={{ body: { padding: 16 } }}
       style={{
         borderRadius: 8,
@@ -93,33 +132,65 @@ export default function Ranking() {
     >
       <Table
         columns={columns}
-        dataSource={mockRanking}
+        dataSource={ranking}
         pagination={false}
         size="middle"
         rowKey="key"
+        loading={loading}
+        locale={{
+          emptyText: (
+            <div
+              style={{
+                height: 120,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              Brak danych. Wykonaj ćwiczenia, aby zobaczyć ranking.
+            </div>
+          ),
+        }}
       />
 
-      <div
-        style={{
-          marginTop: 12,
-          padding: "12px 16px",
-          borderRadius: token.borderRadiusLG,
-          background: token.colorInfoBg,
-          border: `1px solid ${token.colorInfoBorder}`,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text strong style={{ fontSize: 16, color: token.colorText }}>
-          Twoja pozycja: {yourPosition.key}
-        </Text>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Tag color="blue">{yourPosition.bestExercise}</Tag>
-          <Tag color="green">{yourPosition.points} pkt</Tag>
-          <Tag color="orange">{yourPosition.streak} dni serii</Tag>
+      {me && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "12px 16px",
+            borderRadius: token.borderRadiusLG,
+            background: token.colorInfoBg,
+            border: `1px solid ${token.colorInfoBorder}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text strong style={{ fontSize: 16, color: token.colorText }}>
+            Twoja pozycja: {me.key}
+          </Text>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Tag color="blue">{me.bestExercise}</Tag>
+            <Tag color="green">{me.points} pkt</Tag>
+            <Tag color="orange">{me.streak} dni serii</Tag>
+          </div>
         </div>
-      </div>
+      )}
     </Card>
   );
+}
+
+function mapExerciseName(code) {
+  switch (code) {
+    case "jumping-jacks":
+      return "Pajacyki";
+    case "squat":
+      return "Przysiady";
+    case "side-lunges":
+      return "Wykroki boczne";
+    case "side-bends":
+      return "Skłony w bok";
+    default:
+      return code || "—";
+  }
 }

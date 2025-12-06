@@ -18,7 +18,7 @@ export default function HeaderNav({ children }) {
                 color: "#fff",
             }}
         >
-            <Text strong style={{ fontSize: 26}}>TensorFit</Text>
+            <Text strong style={{ fontSize: 26, color: "#fff"}}>TensorFit</Text>
         </Header>
         )
     }
@@ -39,9 +39,9 @@ export default function HeaderNav({ children }) {
                 height: "100%"
             }}
         >
-            <Text strong style={{ fontSize: 26}}>TensorFit</Text>
+            <Text strong style={{ fontSize: 26, color: "#fff"}}>TensorFit</Text>
             <Text
-                style={{fontSize: 26}}>
+                style={{fontSize: 26, color: "#fff"}}>
                 Witaj, {user.username}!
             </Text>
             <Button onClick={() => logout()}>

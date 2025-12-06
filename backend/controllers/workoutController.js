@@ -1,6 +1,7 @@
 const { Workout } = require('../models');
 const { Op } = require('sequelize');
 const dayjs = require('dayjs');
+const sequelize = require('../db');
 
 exports.createWorkout = async (req, res) => {
     console.log('Received workout creation request:', req.body);
@@ -53,6 +54,7 @@ exports.getMyWorkouts = async (req, res) => {
 };
 
 exports.getWorkoutById = async (req, res) => {
+  console.log("HIT GetWorkoutid");
     try {
         const workout = await Workout.findOne({
             where: { id: req.params.id, userId: req.user.id }
@@ -132,6 +134,27 @@ exports.getWorkoutStats = async (req, res) => {
       biggestReps: biggestReps ? { type: biggestReps.exerciseType, count: biggestReps.counter } : null,
     });
 
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getRanking = async (req, res) => {
+  console.log("HIT GETRANKING");
+  try {
+    const last = req.query.last === 'all' ? 'all' : '30';
+    const me = req.user.id;
+
+    const result = await sequelize.query(
+      'SELECT get_ranking(:last, :me) AS data',
+      {
+        replacements: { last, me },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    return res.json(result[0].data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });

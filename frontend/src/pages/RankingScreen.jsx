@@ -17,10 +17,10 @@ export default function RankingScreen() {
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         flexDirection: "column",
         width: "100%",
-        maxHeight: "100vh",
+        minHeight: "100vh",
         gap: "20px",
         padding: isMobile ? "16px" : "24px",
         paddingTop: "20px"

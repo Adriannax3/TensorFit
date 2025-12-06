@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Card, Select, Divider, theme as antdTheme, Button } from "antd";
+import { Card, Select, Divider, theme as antdTheme, Button, Spin } from "antd";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import { IoShareSocialOutline } from "react-icons/io5";
@@ -51,6 +51,8 @@ export default function ExerciseSummaryChart({ onShare }) {
   const [dataset, setDataset] = useState([]);
   const [datePreset, setDatePreset] = useState("7");
   const [selectedTypes, setSelectedTypes] = useState([]);
+  
+  const [loading, setLoading] = useState(false);
 
   const allTypes = useMemo(
     () => Array.from(new Set(dataset.map(d => d.exerciseType))),
@@ -63,6 +65,7 @@ export default function ExerciseSummaryChart({ onShare }) {
 
   useEffect(() => {
     const fetchWorkouts = async () => {
+      setLoading(true);
       try {
         const days = calculateDaysBack(datePreset);
         const data = await getMyWorkouts(days);
@@ -77,6 +80,8 @@ export default function ExerciseSummaryChart({ onShare }) {
         setDataset(mapped);
       } catch (err) {
         console.error("Error fetching workouts:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -160,8 +165,26 @@ export default function ExerciseSummaryChart({ onShare }) {
     { value: "365", label: "Ostatni rok" },
     { value: null, label: "Wszystko" },
   ];
+  
+  if (loading) return (
+    <div>
+      <Spin size="large" />
+    </div>
+  );
 
-  if (!dataset) return <div>Ładowanie...</div>;
+  if (dataset.length==0) 
+  return (
+    <Card style={{ 
+      display: "flex", 
+      justifyContent: "center",
+      alignItems: "center",
+      textAlign: "center",
+      height: "100%" 
+    }}>
+      Brak danych. <br />
+      Wykonaj ćwiczenia by zobaczyć statystyki.
+    </Card>
+  );
 
   return (
     <Card
