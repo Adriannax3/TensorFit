@@ -32,7 +32,6 @@ export default function ExerciseHighlights() {
       try { 
         const res = await getMyWorkoutsStats();
         setDataset(res);
-        console.log(res);
       } catch (error) {
         console.error("Error fetching workout stats:", error);
       } finally {

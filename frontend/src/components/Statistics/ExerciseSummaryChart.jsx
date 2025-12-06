@@ -211,7 +211,11 @@ export default function ExerciseSummaryChart({ onShare }) {
         </div>
       }
     >
-      <ReactECharts ref={chartRef} option={option} style={{ height: 320, width: "100%" }} opts={{ renderer: "svg" }} />
+      <ReactECharts 
+        ref={chartRef} 
+        option={option} 
+        style={{ height: 320, width: "100%" }} 
+      />
       <Divider style={{ margin: "8px 0 0" }} />
     </Card>
   );

@@ -3,7 +3,7 @@ import { Row, Col, Button, Grid, Typography, theme } from "antd";
 import { useNavigate } from "react-router-dom";
 import ExerciseSummaryChart from "../components/Statistics/ExerciseSummaryChart";
 import ExerciseHighlights from "../components/Statistics/ExerciseHighlights";
-import ShareActivityModal from "../components/Statistics/ShareActivityModal";
+import ShareActivityModal from "../components/ShareActivityModal";
 
 const { useBreakpoint } = Grid;
 const { Title } = Typography;

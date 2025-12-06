@@ -9,7 +9,7 @@ import { EXERCISES } from "../utils/workout/chooseWorkout";
 import Counter from "../components/Counter";
 import TimerCounter from "../components/TimeCounter";
 import html2canvas from "html2canvas";
-import ShareActivityModal from "../components/Statistics/ShareActivityModal";
+import ShareActivityModal from "../components/ShareActivityModal";
 
 import { createWorkout } from "../services/api";
 
@@ -65,7 +65,15 @@ export default function WorkoutSession() {
 
   const captureSummaryImage = async () => {
     const element = document.getElementById("summary-capture");
-    const canvas = await html2canvas(element);
+  
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      foreignObjectRendering: false,
+      removeContainer: true,
+      backgroundColor: "#ffffff",
+      scale: 2
+    });
+  
     return canvas.toDataURL("image/png");
   };
 
