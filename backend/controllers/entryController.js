@@ -83,8 +83,14 @@ exports.getAllEntries = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const entries = await Entry.findAll({
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    const { rows, count } = await Entry.findAndCountAll({
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
       attributes: {
         include: [
           [
@@ -111,24 +117,35 @@ exports.getAllEntries = async (req, res) => {
                 AND "Like"."userId" = ${userId}
             )`),
             'likedByMe'
+          ],
+          [
+            literal(`"Entry"."userId" = ${userId}`),
+            'isMine'
           ]
         ]
       },
       include: [
         {
           model: User,
-          attributes: ['username'],
+          attributes: ['username', 'avatarColor'],
         }
       ]
     });
 
-    res.json(entries);
+    res.json({
+      entries: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
   } catch (err) {
     console.error('Error while getting all entries:', err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 exports.getEntryById = async (req, res) => {
   try {
@@ -157,14 +174,14 @@ exports.getEntryById = async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ['username'],
+          attributes: ['username', 'avatarColor'],
         },
         {
           model: Comment,
           include: [
             {
               model: User,
-              attributes: ['username'],
+              attributes: ['username', 'avatarColor'],
             }
           ]
         }
@@ -211,6 +228,7 @@ exports.updateEntry = async (req, res) => {
 };
 
 exports.deleteEntry = async (req, res) => {
+  console.log('delete entry');
   try {
     const entry = await Entry.findOne({
       where: { id: req.params.id, userId: req.user.id },
@@ -293,6 +311,44 @@ exports.createComment = async (req, res) => {
     res.status(201).json(fullComment);
   } catch (err) {
     console.error('Error while creating comment:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteComment = async (req, res) => {  
+  try {
+    const { entryId, commentId } = req.params;
+    console.log("Deleting comment", { entryId, commentId });
+    const userId = req.user.id;
+
+    const comment = await Comment.findOne({
+      where: { id: commentId, entryId },
+      include: [
+        {
+          model: Entry,
+          attributes: ["userId"]
+        }
+      ]
+    });
+
+    if (!comment) {
+      return res.status(404).json({ error: "Komentarz nie istnieje." });
+    }
+
+    const isAuthor = comment.userId === userId;
+    const isEntryOwner = comment.Entry.userId === userId;
+
+    if (!isAuthor && !isEntryOwner) {
+      return res
+        .status(403)
+        .json({ error: "Nie masz uprawnień do usunięcia tego komentarza." });
+    }
+
+    await comment.destroy();
+
+    res.json({ success: true, message: "Komentarz usunięty." });
+  } catch (err) {
+    console.error("Error deleting comment:", err);
     res.status(500).json({ error: err.message });
   }
 };

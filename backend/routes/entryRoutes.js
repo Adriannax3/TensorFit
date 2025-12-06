@@ -11,6 +11,7 @@ router.get('/my', protect, entryController.getMyEntries);
 router.get('/all', protect, entryController.getAllEntries);
 router.get('/:id', protect, entryController.getEntryById);
 router.put('/:id', protect, upload.single('image'), entryController.updateEntry);
+router.delete('/:entryId/comments/:commentId', protect, entryController.deleteComment);
 router.delete('/:id', protect, entryController.deleteEntry);
 
 module.exports = router;

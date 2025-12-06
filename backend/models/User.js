@@ -14,6 +14,12 @@ const User = sequelize.define('User', {
     },
     password: {
         type: DataTypes.STRING,
+        allowNull: false,
+    },
+    avatarColor: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "#ccc"
     }
 });
 

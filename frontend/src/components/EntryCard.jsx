@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
-import { Card, Avatar, Space, Input, Button, List } from "antd";
-import { LikeOutlined, LikeFilled, MessageOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Avatar,
+  Space,
+  Input,
+  Button,
+  List,
+  theme,
+  Popconfirm,
+  message,
+} from "antd";
+import {
+  LikeOutlined,
+  LikeFilled,
+  MessageOutlined,
+} from "@ant-design/icons";
 import axios from "../axios";
-import { theme } from "antd";
+import { useAuth } from "../context/useAuth";
 
 function decodeImage(image) {
   if (!image) return null;
@@ -24,12 +38,17 @@ function decodeImage(image) {
   return null;
 }
 
-export default function EntryCard({ entry }) {
+export default function EntryCard({ entry, onDeleted, onUpdated }) {
   const imageSrc = decodeImage(entry.image);
   const { token } = theme.useToken();
   const primaryColor = token.colorPrimary;
 
+  const { user } = useAuth() || {};
+  const currentUserId = user?.id ?? null;
+
   const username = entry.User?.username || entry.username || "Anonim";
+  const avatarColor = entry.User?.avatarColor || "#ccc";
+
   const createdAt = entry.createdAt
     ? new Date(entry.createdAt).toLocaleString("pl-PL", {
         day: "2-digit",
@@ -50,10 +69,24 @@ export default function EntryCard({ entry }) {
   const [commentCount, setCommentCount] = useState(entry.commentCount ?? 0);
   const [addingComment, setAddingComment] = useState(false);
 
+  const [deletingCommentId, setDeletingCommentId] = useState(null);
+
+  const canEditPost = !!entry.isMine;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(entry.title || "");
+  const [editDescription, setEditDescription] = useState(
+    entry.description || ""
+  );
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [deletingEntry, setDeletingEntry] = useState(false);
+
   useEffect(() => {
     setLiked(!!entry.likedByMe);
     setLikeCount(entry.likeCount ?? 0);
     setCommentCount(entry.commentCount ?? 0);
+    setEditTitle(entry.title || "");
+    setEditDescription(entry.description || "");
   }, [entry]);
 
   const handleToggleLike = async () => {
@@ -111,26 +144,173 @@ export default function EntryCard({ entry }) {
     }
   };
 
+  const handleStartEdit = () => {
+    if (!canEditPost) return;
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle(entry.title || "");
+    setEditDescription(entry.description || "");
+  };
+
+  const handleSaveEdit = async () => {
+    const title = editTitle.trim();
+    const description = editDescription.trim();
+
+    if (!title) return;
+
+    try {
+      setSavingEdit(true);
+      const res = await axios.put(`/entries/${entry.id}`, {
+        title,
+        description,
+      });
+
+      const updated = res.data || {};
+      setEditTitle(updated.title ?? title);
+      setEditDescription(updated.description ?? description);
+      
+      if (onUpdated) {
+        onUpdated(updated);
+      }
+      
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating entry:", err);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const canDeleteComment = (comment) => {
+    if (entry.isMine) return true;
+    if (!currentUserId) return false;
+    return comment.userId === currentUserId;
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!commentId) return;
+    try {
+      setDeletingCommentId(commentId);
+      await axios.delete(`/entries/${entry.id}/comments/${commentId}`);
+
+      setComments((prev) =>
+        prev.filter((c) => (c.id ?? c.commentId) !== commentId)
+      );
+      setCommentCount((prev) => (prev > 0 ? prev - 1 : 0));
+
+      message.success("Komentarz został usunięty");
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+      message.error("Nie udało się usunąć komentarza");
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
+  const handleDeleteEntry = async () => {
+    try {
+      setDeletingEntry(true);
+      await axios.delete(`/entries/${entry.id}`);
+      message.success("Wpis został usunięty");
+      if (onDeleted) {
+        onDeleted(entry.id);
+      }
+    } catch (err) {
+      console.error("Error deleting entry:", err);
+      message.error("Nie udało się usunąć wpisu");
+    } finally {
+      setDeletingEntry(false);
+    }
+  };
+
   return (
     <Card style={{ marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
-      <Space align="start">
-        <Avatar>{username[0]}</Avatar>
-        <div>
-          <strong>{username}</strong>
-          {createdAt && (
-            <div style={{ fontSize: 12, opacity: 0.7 }}>{createdAt}</div>
-          )}
-        </div>
+      <Space
+        align="start"
+        style={{ width: "100%", justifyContent: "space-between" }}
+      >
+        <Space align="start">
+          <Avatar style={{ backgroundColor: avatarColor }}>
+            {username[0]}
+          </Avatar>
+          <div>
+            <strong>{username}</strong>
+            {createdAt && (
+              <div style={{ fontSize: 12, opacity: 0.7 }}>{createdAt}</div>
+            )}
+          </div>
+        </Space>
+
+        {canEditPost && (
+          <Space>
+            {isEditing ? (
+              <>
+                <Button size="small" onClick={handleCancelEdit}>
+                  Anuluj
+                </Button>
+                <Button
+                  type="primary"
+                  size="small"
+                  loading={savingEdit}
+                  onClick={handleSaveEdit}
+                >
+                  Zapisz
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="small" onClick={handleStartEdit}>
+                  Edytuj wpis
+                </Button>
+                <Popconfirm
+                  title="Usunąć wpis?"
+                  description="Tej operacji nie można cofnąć."
+                  okText="Usuń"
+                  cancelText="Anuluj"
+                  okButtonProps={{ danger: true, loading: deletingEntry }}
+                  onConfirm={handleDeleteEntry}
+                >
+                  <Button size="small" danger loading={deletingEntry}>
+                    Usuń wpis
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        )}
       </Space>
 
-      {entry.title && (
-        <h3 style={{ marginTop: 12, marginBottom: 8 }}>{entry.title}</h3>
-      )}
+      {canEditPost && isEditing ? (
+        <>
+          <Input
+            placeholder="Tytuł"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            style={{ marginTop: 12, marginBottom: 8 }}
+          />
+          <Input.TextArea
+            placeholder="Opis"
+            autoSize={{ minRows: 2 }}
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            style={{ marginBottom: 8 }}
+          />
+        </>
+      ) : (
+        <>
+          {entry.title && (
+            <h3 style={{ marginTop: 12, marginBottom: 8 }}>{entry.title}</h3>
+          )}
 
-      {entry.description && (
-        <p style={{ marginBottom: 8, whiteSpace: "pre-line" }}>
-          {entry.description}
-        </p>
+          {entry.description && (
+            <p style={{ marginBottom: 8, whiteSpace: "pre-line" }}>
+              {entry.description}
+            </p>
+          )}
+        </>
       )}
 
       {imageSrc && (
@@ -165,7 +345,7 @@ export default function EntryCard({ entry }) {
           )}
           {likeCount}
         </span>
-      
+
         <span
           onClick={handleToggleComments}
           style={{
@@ -211,19 +391,52 @@ export default function EntryCard({ entry }) {
             dataSource={comments}
             locale={{ emptyText: "Brak komentarzy" }}
             style={{ marginTop: 16 }}
-            renderItem={(c) => (
-              <List.Item>
-                <Space align="start">
-                  <Avatar>{c.User?.username?.[0] ?? "U"}</Avatar>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
-                      {c.User?.username || "Użytkownik"}
+            renderItem={(c) => {
+              const commentUsername = c.User?.username || "Użytkownik";
+              const commentColor = c.User?.avatarColor || "#ccc";
+              const canDelete = canDeleteComment(c);
+              const commentId = c.id ?? c.commentId;
+
+              return (
+                <List.Item
+                  actions={
+                    canDelete
+                      ? [
+                          <Popconfirm
+                            title="Usunąć komentarz?"
+                            okText="Usuń"
+                            cancelText="Anuluj"
+                            okButtonProps={{
+                              danger: true,
+                              loading: deletingCommentId === commentId,
+                            }}
+                            onConfirm={() => handleDeleteComment(commentId)}
+                          >
+                            <Button
+                              type="link"
+                              danger
+                              size="small"
+                              loading={deletingCommentId === commentId}
+                            >
+                              Usuń
+                            </Button>
+                          </Popconfirm>,
+                        ]
+                      : []
+                  }
+                >
+                  <Space align="start">
+                    <Avatar style={{ backgroundColor: commentColor }}>
+                      {commentUsername[0]}
+                    </Avatar>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{commentUsername}</div>
+                      <div>{c.content}</div>
                     </div>
-                    <div>{c.content}</div>
-                  </div>
-                </Space>
-              </List.Item>
-            )}
+                  </Space>
+                </List.Item>
+              );
+            }}
           />
         </div>
       )}
