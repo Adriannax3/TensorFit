@@ -11,6 +11,7 @@ import RankingScreen from "./pages/RankingScreen";
 import StatisticsScreen from "./pages/StatisticsScreen";
 import EntriesScreen from "./pages/Entries";
 import MainLayout from "./layout/MainLayout";
+import Account from "./pages/Account";
 
 function App({ toggleTheme, isDark }) {
   const { user } = useAuth();
@@ -70,6 +71,14 @@ function App({ toggleTheme, isDark }) {
             element={
               <ProtectedRoute>
                 <EntriesScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
               </ProtectedRoute>
             }
           />

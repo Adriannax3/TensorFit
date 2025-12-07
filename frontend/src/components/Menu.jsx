@@ -109,6 +109,16 @@ export default function Menu() {
             Wpisy
           </Card>
         </div>
+        <div className="menu-link">
+          <Card
+            variant="outlined"
+            className="menu-card"
+            onClick={() => navigate("/account")}
+            hoverable
+          >
+            Moje konto
+          </Card>
+        </div>
       </div>
     </div>
   );
