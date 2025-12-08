@@ -94,11 +94,10 @@ exports.deleteEntry = async (req, res) => {
 
 exports.deleteComment = async (req, res) => {  
   try {
-    const { entryId, commentId } = req.params;
-    const userId = req.user.id;
+    const { id } = req.params;
 
     const comment = await Comment.findOne({
-      where: { id: commentId, entryId },
+      where: { id },
       include: [
         {
           model: Entry,
