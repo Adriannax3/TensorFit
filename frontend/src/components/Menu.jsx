@@ -4,6 +4,7 @@ import "../styles/menu.scss";
 import MenuWorkout from "./Menu_Workout";
 import MenuStats from "./Menu_Statistics";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
 export default function Menu() {
   const location = useLocation();
@@ -15,6 +16,7 @@ export default function Menu() {
       : null
   );
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   if (option == "workouts") {
     return (
@@ -119,6 +121,16 @@ export default function Menu() {
             Moje konto
           </Card>
         </div>
+        {user.isAdmin && <div className="menu-link">
+          <Card
+            variant="outlined"
+            className="menu-card"
+            onClick={() => navigate("/admin")}
+            hoverable
+          >
+            Panel admina
+          </Card>
+        </div>}
       </div>
     </div>
   );

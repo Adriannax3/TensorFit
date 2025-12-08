@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('TensorFit', 'ada', 'freja2137', {
+const sequelize = new Sequelize('TensorFit', 'postgres', 'qwerty123', {
   host: 'localhost',
   dialect: 'postgres',
 });

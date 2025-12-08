@@ -12,3 +12,23 @@ export function angleBetweenPoints(a, b, c) {
 
   return (angleRad * 180) / Math.PI;
 }
+
+export function decodeImage(image) {
+  if (!image) return null;
+
+  if (typeof image === "string") {
+    if (image.startsWith("data:")) {
+      return image;
+    }
+    return `data:image/png;base64,${image}`;
+  }
+
+  if (image?.data && Array.isArray(image.data)) {
+    const uint8 = new Uint8Array(image.data);
+    const binary = uint8.reduce((s, b) => s + String.fromCharCode(b), "");
+    const base64 = btoa(binary);
+    return `data:image/png;base64,${base64}`;
+  }
+
+  return null;
+}

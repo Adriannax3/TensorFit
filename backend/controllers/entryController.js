@@ -228,7 +228,6 @@ exports.updateEntry = async (req, res) => {
 };
 
 exports.deleteEntry = async (req, res) => {
-  console.log('delete entry');
   try {
     const entry = await Entry.findOne({
       where: { id: req.params.id, userId: req.user.id },
@@ -318,7 +317,6 @@ exports.createComment = async (req, res) => {
 exports.deleteComment = async (req, res) => {  
   try {
     const { entryId, commentId } = req.params;
-    console.log("Deleting comment", { entryId, commentId });
     const userId = req.user.id;
 
     const comment = await Comment.findOne({

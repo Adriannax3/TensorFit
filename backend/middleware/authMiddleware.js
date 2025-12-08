@@ -18,3 +18,28 @@ exports.protect = (req, res, next) => {
     return res.status(401).json({ error: 'Token nieważny' });
   }
 };
+
+exports.protectAdmin = (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: 'Nie zalogowany' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ error: 'Brak uprawnień — tylko admin' });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token nieważny' });
+  }
+};

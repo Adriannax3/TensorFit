@@ -12,6 +12,7 @@ import StatisticsScreen from "./pages/StatisticsScreen";
 import EntriesScreen from "./pages/Entries";
 import MainLayout from "./layout/MainLayout";
 import Account from "./pages/Account";
+import AdminPanel from "./pages/AdminPanel";
 
 function App({ toggleTheme, isDark }) {
   const { user } = useAuth();
@@ -82,6 +83,14 @@ function App({ toggleTheme, isDark }) {
               </ProtectedRoute>
             }
           />
+          {user?.isAdmin && <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />}
         </Route>
       </Routes>
     </>

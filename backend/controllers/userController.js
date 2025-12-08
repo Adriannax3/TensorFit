@@ -13,7 +13,7 @@ exports.createUser = async (req, res) => {
         const hashedPassword = hashPassword(password);
 
         const user = await User.create({ email, username, password: hashedPassword });
-        const token = jwt.sign({ id: user.id, email: user.email, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign({ id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
         const { password: _, ...userData } = user.toJSON();
         res.json({ user: userData, token });
     } catch (err) {
@@ -27,11 +27,12 @@ exports.loginUser = async (req, res) => {
         if (!email || !password) return res.status(400).json({ error: 'Brak pól' });
 
         const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(401).json({ error: 'Nieprawidłowe dane' });
+        if (!user) return res.status(401).json({ error: 'Nie znaleziono użytkownika' });
 
         const isMatch = comparePassword(password, user.password);
-        if (!isMatch) return res.status(401).json({ error: 'Nieprawidłowe dane' });
-        const token = jwt.sign({ id: user.id, email: user.email, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        if (!isMatch) return res.status(401).json({ error: 'Nieprawidłowe hasło' });
+        if (user.isBlocked) return res.status(403).json({ error: 'Konto zablokowane' });
+        const token = jwt.sign({ id: user.id, email: user.email, username: user.username, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         const { password: _, ...userData } = user.toJSON();
         res.json({ user: userData, token });

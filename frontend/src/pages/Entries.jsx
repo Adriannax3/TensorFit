@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Layout, Button, Spin } from "antd";
+import { Layout, Button, Spin, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "../axios";
 import EntryCard from "../components/EntryCard";
 
 const { Content } = Layout;
+const { Title } = Typography;
 
 export default function EntriesScreen() {
   const navigate = useNavigate();
@@ -68,6 +69,21 @@ export default function EntriesScreen() {
       )
     );
   };
+
+  if(entries.length === 0 && !loading) {
+    return (
+      <Layout style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}> 
+        <Button
+          type="primary"
+          style={{ marginBottom: 16 }}
+          onClick={() => navigate("/menu", { state: { statsMenu: true } })}
+        >
+          ← Powrót
+        </Button>
+        <Title level={3}>Nikt jeszcze nie dodał żadnych wpisów.</Title>
+      </Layout>
+    );
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>

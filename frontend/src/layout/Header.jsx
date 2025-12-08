@@ -1,11 +1,13 @@
 import { useAuth } from '../context/useAuth';
 import { Button, Layout, Typography } from "antd";
+import { useNavigate } from 'react-router';
 
 const { Header } = Layout;
 const { Text } = Typography;
 
 export default function HeaderNav({ children }) {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     if(!user) {
         return (
@@ -44,7 +46,10 @@ export default function HeaderNav({ children }) {
                 style={{fontSize: 26, color: "#fff"}}>
                 Witaj, {user.username}!
             </Text>
-            <Button onClick={() => logout()}>
+            <Button onClick={() => {
+                navigate('/');
+                logout();
+                }}>
                 Wyloguj się
             </Button>
         </Header>
