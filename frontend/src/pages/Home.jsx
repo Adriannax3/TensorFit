@@ -35,6 +35,10 @@ export default function Home() {
       }
     } catch (err) {
       if (error) {
+        if(error.code === 409) {
+          messageApi.error("Nazwa użytkownika lub email są już zajęte.");
+          return;
+        }
         messageApi.error(error);
       } else {
         messageApi.error("Wystąpił błąd. Spróbuj ponownie.");
