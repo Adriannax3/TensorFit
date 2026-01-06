@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Tabs, Card, Layout, Button, Spin, Alert } from "antd";
+import { Tabs, Card, Layout, Button, Spin, Alert, Typography } from "antd";
 import EntriesAdmin from "../components/Admin/EntriesAdmin";
 import UsersAdmin from "../components/Admin/UsersAdmin";
 import CommentsAdmin from "../components/Admin/CommentsAdmin";
 import { deleteEntry, toggleBlockUser, getUsers, getEntries, getAllComments, deleteComment } from "../services/api";
 import { decodeImage } from "../utils/calculations";
+
+const { Title } = Typography;
 
 export default function AdminPanel() {
 
@@ -111,6 +113,7 @@ export default function AdminPanel() {
 
   return (
     <Layout style={{ minHeight: "100vh", padding: 20 }}>
+      <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>Panel administratora</Title>
       <Card style={{ width: "100%", margin: "0 auto", padding: 16 }}>
         {statusMessage && (
           <Alert
