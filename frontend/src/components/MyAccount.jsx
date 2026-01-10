@@ -21,8 +21,8 @@ import {
   EyeTwoTone,
   SyncOutlined,
 } from "@ant-design/icons";
-import axios from "../axios";
 import { useAuth } from "../context/useAuth";
+import { getMe, updateProfile, changePassword } from '../services/api';
 
 const { Title, Text } = Typography;
 
@@ -60,8 +60,7 @@ export default function MyAccount() {
   const fetchMe = async () => {
     try {
       setLoadingUser(true);
-      const res = await axios.get("/users/me");
-      const u = res.data;
+      const u = await getMe();
       setUsername(u.username || "");
       setEmail(u.email || "");
       setAvatarColor(u.avatarColor || "#ccc");
@@ -117,12 +116,10 @@ export default function MyAccount() {
       setSavingProfile(true);
       setError(null);
 
-      const res = await axios.put("/users/me", {
+      const updatedUser = await updateProfile({
         username: trimmedUsername,
         avatarColor,
       });
-
-      const updatedUser = res.data.user || res.data;
 
       setUsername(updatedUser.username || trimmedUsername);
       setAvatarColor(updatedUser.avatarColor || avatarColor);
@@ -176,16 +173,16 @@ export default function MyAccount() {
       password += all[Math.floor(Math.random() * all.length)];
     }
 
-    const array = password.split("");
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    const finalPassword = array.join("");
+    password = password
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
 
-    setNewPassword(finalPassword);
-    setConfirmNewPassword(finalPassword);
+    setNewPassword(password);
+    setConfirmNewPassword(password);
   };
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
   const handleChangePassword = async () => {
     setPasswordError("");
@@ -200,18 +197,16 @@ export default function MyAccount() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setPasswordError("Nowe hasło musi mieć co najmniej 8 znaków");
+    if (!passwordRegex.test(newPassword)) {
+      setPasswordError(
+        "Hasło musi mieć min. 8 znaków, 1 dużą literę, 1 małą literę, 1 cyfrę i 1 znak specjalny!"
+      );
       return;
     }
 
     try {
       setChangingPassword(true);
-      await axios.put("/users/change-password", {
-        oldPassword,
-        newPassword,
-      });
-
+      await changePassword(oldPassword, newPassword);
       setPasswordModalOpen(false);
       setPasswordError("");
     } catch (err) {
@@ -414,14 +409,10 @@ export default function MyAccount() {
           </Form.Item>
 
           {passwordError && (
-            <div style={{ color: "red", marginBottom: 12 }}>
-              {passwordError}
-            </div>
+            <div style={{ color: "red", marginBottom: 12 }}>{passwordError}</div>
           )}
 
-          <Space
-            style={{ width: "100%", justifyContent: "flex-end", marginTop: 8 }}
-          >
+          <Space style={{ width: "100%", justifyContent: "flex-end", marginTop: 8 }}>
             <Button onClick={closePasswordModal} disabled={changingPassword}>
               Anuluj
             </Button>

@@ -24,6 +24,21 @@ export const getEntries = async (pageToLoad, limit) => {
   return response.data;
 }
 
+export const getMe = async () => {
+  const response = await axios.get('/users/me');
+  return response.data;
+}
+
+export const updateProfile = async (profileData) => {
+  const response = await axios.put('/users/me', profileData);
+  return response.data;
+}
+
+export const changePassword = async (oldPassword, newPassword) => {
+  const response = await axios.put('/users/change-password', { oldPassword, newPassword });
+  return response.data;
+}
+
 // Admin
 
 export const toggleBlockUser = async (id) => {

@@ -60,10 +60,6 @@ export default function ExerciseSummaryChart({ onShare }) {
   );
 
   useEffect(() => {
-    setSelectedTypes(allTypes);
-  }, [allTypes]);
-
-  useEffect(() => {
     const fetchWorkouts = async () => {
       setLoading(true);
       try {
@@ -76,6 +72,7 @@ export default function ExerciseSummaryChart({ onShare }) {
           counter: w.counter,
           time: w.time
         }));
+        setSelectedTypes(Array.from(new Set(mapped.map(d => d.exerciseType))));
 
         setDataset(mapped);
       } catch (err) {
@@ -212,6 +209,7 @@ export default function ExerciseSummaryChart({ onShare }) {
       }
     >
       <ReactECharts 
+        key={selectedTypes.join(",")} 
         ref={chartRef} 
         option={option} 
         style={{ height: 320, width: "100%" }} 

@@ -108,7 +108,7 @@ exports.changePassword = async (req, res) => {
 
     const isMatch = comparePassword(oldPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Stare hasło jest nieprawidłwe' });
+      return res.status(422).json({ error: 'Stare hasło jest nieprawidłowe' });
     }
 
     const hashedPassword = hashPassword(newPassword);

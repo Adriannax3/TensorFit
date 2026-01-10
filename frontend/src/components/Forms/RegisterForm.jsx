@@ -39,7 +39,10 @@ export default function RegisterForm({ onSubmit }) {
           <Form.Item
             label="Nazwa użytkownika"
             name="username"
-            rules={[{ required: true, message: "Podaj nazwę użytkownika!" }]}
+            rules={[
+              { required: true, message: "Podaj nazwę użytkownika!" },
+              { min: 5, message: "Nazwa użytkownika musi mieć minimum 5 znaków!" },
+            ]}
           >
             <Input placeholder="Nazwa użytkownika" />
           </Form.Item>
@@ -47,7 +50,14 @@ export default function RegisterForm({ onSubmit }) {
           <Form.Item
             label="Hasło"
             name="password"
-            rules={[{ required: true, message: "Podaj hasło!" }]}
+            rules={[
+              { required: true, message: "Podaj hasło!" },
+              {
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                message:
+                  "Hasło musi mieć min. 8 znaków, 1 dużą literę, 1 małą literę, 1 cyfrę i 1 znak specjalny!",
+              },
+            ]}
             hasFeedback
           >
             <Input.Password placeholder="Hasło" />

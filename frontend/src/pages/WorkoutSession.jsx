@@ -87,11 +87,14 @@ export default function WorkoutSession() {
         counter: count,
         time: elapsedSeconds
       });
-
-      const imageUrl = await captureSummaryImage();
-      setSummaryImage(imageUrl);
       setIsShareActivityOpen(true);
-      handleResetAll();
+
+      setTimeout(async () => {
+        const imageUrl = await captureSummaryImage();
+        setSummaryImage(imageUrl);
+        
+        handleResetAll();
+      }, 50);
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -239,23 +242,14 @@ export default function WorkoutSession() {
         )}
       </div>
 
-      <Button onClick={toggleDebug}>
-        {debug ? "Wyłącz debug" : "Włącz debug"}
-      </Button>
-
-      <Card style={{ width: 320, textAlign: "center" }}>
-        <div style={{ fontSize: 14, opacity: 0.7 }}>Faza</div>
-        <div style={{ fontSize: 24, marginBottom: 8 }}>{phase}</div>
-        <div style={{ fontSize: 14, opacity: 0.7 }}>Powtórzenia</div>
-        <div style={{ fontSize: 36, fontWeight: 700 }}>{count}</div>
-      </Card>
-
-      <div id="summary-capture" style={{ width: 300 }}>
-        <div>Liczba serii:</div>
-        <Counter value={count} />
-        <div>Czas:</div>
-        <TimerCounter seconds={elapsedSeconds} />
-      </div>
+      {isShareActivityOpen && (
+        <div id="summary-capture" style={{ width: 300 }}>
+          <div>Liczba serii:</div>
+          <Counter value={count} />
+          <div>Czas:</div>
+          <TimerCounter seconds={elapsedSeconds} />
+        </div>
+      )}
 
       <ShareActivityModal 
         open={isShareActivityOpen}
@@ -263,8 +257,7 @@ export default function WorkoutSession() {
         onClose={() => setIsShareActivityOpen(false)}
           image={summaryImage}
           onSubmit={(payload) => {
-            console.log("Dane do wysyłki:", payload);
-
+            console.log("Dane:", payload);
             setIsShareActivityOpen(false);
         }}
       />

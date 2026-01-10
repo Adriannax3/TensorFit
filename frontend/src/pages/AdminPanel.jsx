@@ -5,6 +5,7 @@ import UsersAdmin from "../components/Admin/UsersAdmin";
 import CommentsAdmin from "../components/Admin/CommentsAdmin";
 import { deleteEntry, toggleBlockUser, getUsers, getEntries, getAllComments, deleteComment } from "../services/api";
 import { decodeImage } from "../utils/calculations";
+import { useNavigate } from "react-router";
 
 const { Title } = Typography;
 
@@ -23,11 +24,12 @@ export default function AdminPanel() {
   const entriesLimit = 25;
 
   const [statusMessage, setStatusMessage] = useState(null);
+  const navigate = useNavigate();
+
   const fetchEntries = async (page = 1) => {
     try {
       setLoadingEntries(true);
       const data = await getEntries(page, entriesLimit);
-      console.log("Fetched entries:", data);
       if (data.entries.length < entriesLimit) setHasMoreEntries(false);
       if (page === 1) {
         setEntries(data.entries);
@@ -113,7 +115,27 @@ export default function AdminPanel() {
 
   return (
     <Layout style={{ minHeight: "100vh", padding: 20 }}>
-      <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>Panel administratora</Title>
+       <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            marginBottom: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <Button
+            type="primary"
+            style={{
+              marginBottom: 12
+            }}
+            onClick={() => navigate("/menu")}
+          >
+            ← Powrót
+          </Button>
+          <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>Panel administratora</Title>
+      </div>
       <Card style={{ width: "100%", margin: "0 auto", padding: 16 }}>
         {statusMessage && (
           <Alert
