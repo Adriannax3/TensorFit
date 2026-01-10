@@ -141,7 +141,6 @@ exports.getWorkoutStats = async (req, res) => {
 };
 
 exports.getRanking = async (req, res) => {
-  console.log("HIT GETRANKING");
   try {
     const last = req.query.last === 'all' ? 'all' : '30';
     const me = req.user.id;

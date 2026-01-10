@@ -3,16 +3,15 @@ export default {
     return { lastPhase: "down" };
   },
 
-  update({ keypoints, count, phase, state }) {
-    const NOSE = keypoints[0]; // nose
-    const RS = keypoints[6]; // right shoulder
-    const RW = keypoints[10]; // right wrist
-    const RH = keypoints[12]; // right hip
-    const RA = keypoints[16]; // right ankle
-    const LS = keypoints[5]; // left shoulder
-    const LW = keypoints[9]; // left wrist
-    const LH = keypoints[11]; // left hip
-    const LA = keypoints[15]; // left ankle
+  update({ kp, count, phase, state }) {
+    const RS = kp[6]; // right shoulder
+    const RW = kp[10]; // right wrist
+    const RH = kp[12]; // right hip
+    const RA = kp[16]; // right ankle
+    const LS = kp[5]; // left shoulder
+    const LW = kp[9]; // left wrist
+    const LH = kp[11]; // left hip
+    const LA = kp[15]; // left ankle
 
     // check score
     if (

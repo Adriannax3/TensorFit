@@ -11,9 +11,6 @@ Workout.belongsTo(User, { foreignKey: 'userId' });
 User.hasMany(Entry, { foreignKey: 'userId' });
 Entry.belongsTo(User, { foreignKey: 'userId' });
 
-User.hasMany(Entry, { foreignKey: 'userId' });
-Entry.belongsTo(User, { foreignKey: 'userId' });
-
 User.hasMany(Comment, { foreignKey: 'userId' });
 Comment.belongsTo(User, { foreignKey: 'userId' });
 
@@ -26,5 +23,6 @@ User.belongsToMany(Entry, {
 
 Entry.hasMany(Comment, { foreignKey: 'entryId' });
 Comment.belongsTo(Entry, { foreignKey: 'entryId' });
+Entry.belongsToMany(User, { through: Like, foreignKey: 'entryId', otherKey: 'userId' });
 
 module.exports = { User, Entry, Comment, Like, Workout };

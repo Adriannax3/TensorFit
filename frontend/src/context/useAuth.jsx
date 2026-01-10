@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "../axios.jsx";
+import axios, { setLogoutHandler } from "../axios.jsx";
 
 const AuthContext = createContext();
 
@@ -52,6 +52,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     setUser(null);
   };
+
+  useEffect(() => {
+    setLogoutHandler(logout);
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {

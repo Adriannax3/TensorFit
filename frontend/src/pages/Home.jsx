@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Row, Col, Card, Button, message } from "antd";
+import { Layout, Row, Col, Card, Button, message, Typography } from "antd";
 import LoginForm from "../components/Forms/LoginForm";
 import RegisterForm from "../components/Forms/RegisterForm";
 import { GiBodyBalance } from "react-icons/gi";
@@ -7,6 +7,7 @@ import { useAuth } from "../context/useAuth";
 import { useNavigate } from "react-router-dom";
 
 const { Header, Content } = Layout;
+const { Title } = Typography;
 
 export default function Home() {
   const [mode, setMode] = useState("login");
@@ -59,9 +60,16 @@ export default function Home() {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
+                  color: "#7cacf8",
                 }}
               >
+                <Title level={1} style={{ color: "#7cacf8", textAlign: "center", fontWeight: "bold" }}>
+                  TensorFit
+                </Title>
                 <GiBodyBalance size={250} color="#7cacf8" />
+                <Title level={4} style={{ color: "#7cacf8", maxWidth: 300, textAlign: "center" }}>
+                  Aplikacja webowa ze sztuczną inteligencją śledząca postępy w ćwiczeniach.
+                </Title>
               </Card>
             </Col>
 
