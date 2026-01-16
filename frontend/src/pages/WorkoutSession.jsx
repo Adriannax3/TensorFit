@@ -257,7 +257,6 @@ export default function WorkoutSession() {
         onClose={() => setIsShareActivityOpen(false)}
           image={summaryImage}
           onSubmit={(payload) => {
-            console.log("Dane:", payload);
             setIsShareActivityOpen(false);
         }}
       />

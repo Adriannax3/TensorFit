@@ -106,8 +106,6 @@ export default function StatisticsScreen() {
           onClose={() => setShareModalOpen(false)}
           image={chartImage}
           onSubmit={(payload) => {
-            console.log("Dane do wysyłki:", payload);
-
             setShareModalOpen(false);
           }}
         />

@@ -48,11 +48,6 @@ export default function MenuWorkout() {
             Skłony w bok
           </Card>
         </Link>
-        {/* <Link to="/session/squat" className="menu-link">
-          <Card variant="outlined" className="menu-card">
-            to do: bieg w miejscu
-          </Card>
-        </Link>*/}
       </div>
     </div>
   );

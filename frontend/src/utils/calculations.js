@@ -1,5 +1,4 @@
 export function angleBetweenPoints(a, b, c) {
-  // to do
   const v1 = { x: a.x - b.x, y: a.y - b.y };
   const v2 = { x: c.x - b.x, y: c.y - b.y };
 
