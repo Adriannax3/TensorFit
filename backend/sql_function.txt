@@ -1,0 +1,131 @@
+CREATE OR REPLACE FUNCTION get_ranking(p_last TEXT, p_user_id INT)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    WITH workouts_filtered AS (
+        SELECT
+            "userId" AS user_id,
+            "exerciseType" AS exercise_type,
+            COALESCE("counter", 0) AS counter,
+            "date"::date AS day
+        FROM "Workouts"
+        WHERE
+            (p_last = 'all'
+             OR "date" >= (now()::date - (p_last::int || ' days')::interval))
+    ),
+
+    points_per_workout AS (
+        SELECT
+            user_id,
+            day,
+            exercise_type,
+            CASE exercise_type
+                WHEN 'jumping-jacks' THEN counter * 1.0
+                WHEN 'squat'         THEN counter * 1.3
+                WHEN 'side-lunges'   THEN counter * 1.4
+                WHEN 'side-bends'    THEN counter * 0.8
+                ELSE counter * 1.0
+            END AS points
+        FROM workouts_filtered
+    ),
+
+    points_total AS (
+        SELECT user_id, SUM(points) AS total_points
+        FROM points_per_workout
+        GROUP BY user_id
+    ),
+
+    best_exercise AS (
+        SELECT
+            user_id,
+            (ARRAY_AGG(exercise_type ORDER BY cnt DESC))[1] AS best_exercise
+        FROM (
+            SELECT user_id, exercise_type, COUNT(*) AS cnt
+            FROM workouts_filtered
+            GROUP BY user_id, exercise_type
+        ) t
+        GROUP BY user_id
+    ),
+
+    days_distinct AS (
+        SELECT DISTINCT user_id, day
+        FROM workouts_filtered
+    ),
+
+    days_with_grp AS (
+        SELECT
+            user_id,
+            day,
+            day - (ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY day)) * INTERVAL '1 day' AS grp
+        FROM days_distinct
+    ),
+
+    streaks AS (
+        SELECT
+            user_id,
+            MAX(
+                CASE WHEN group_max_day = user_max_day THEN cnt END
+            ) AS streak
+        FROM (
+            SELECT
+                user_id,
+                grp,
+                COUNT(*) AS cnt,
+                MAX(day) AS group_max_day,
+                MAX(MAX(day)) OVER (PARTITION BY user_id) AS user_max_day
+            FROM days_with_grp
+            GROUP BY user_id, grp
+        ) t
+        GROUP BY user_id
+    ),
+
+    ranking AS (
+        SELECT
+            p.user_id,
+            p.total_points,
+            COALESCE(s.streak, 0) AS streak,
+            b.best_exercise,
+            RANK() OVER (ORDER BY p.total_points DESC) AS rank
+        FROM points_total p
+        LEFT JOIN streaks s ON s.user_id = p.user_id
+        LEFT JOIN best_exercise b ON b.user_id = p.user_id
+    ),
+
+    top10 AS (
+        SELECT jsonb_agg(to_jsonb(r) ORDER BY r.rank ASC) AS data
+        FROM (
+            SELECT * FROM ranking ORDER BY rank LIMIT 10
+        ) r
+    ),
+
+    me_data AS (
+        SELECT to_jsonb(r) AS data
+        FROM ranking r
+        WHERE r.user_id = p_user_id
+        LIMIT 1
+    )
+
+    SELECT jsonb_build_object(
+        'range', CASE WHEN p_last = 'all' THEN 'all' ELSE 'last-30-days' END,
+        'top', (SELECT data FROM top10),
+        'me', (
+            SELECT COALESCE(
+                (SELECT data FROM me_data),
+                jsonb_build_object(
+                    'user_id', p_user_id,
+                    'total_points', 0,
+                    'streak', 0,
+                    'best_exercise', NULL,
+                    'rank', (SELECT COALESCE(MAX(rank),0) + 1 FROM ranking)
+                )
+            )
+        )
+    )
+    INTO result;
+
+    RETURN result;
+END;
+$$;
